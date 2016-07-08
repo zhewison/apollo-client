@@ -61,11 +61,38 @@ export function addTypenameToQuery(queryDef: OperationDefinition): OperationDefi
   return queryClone;
 }
 
+// A list of directives only understood by Apollo Client, that should be stripped before sending
+// the query to the server
+const APOLLO_CLIENT_DIRECTIVES = ['apolloFetchMore'];
+
+export function stripApolloDirectivesFromSelectionSet(selectionSet: SelectionSet): SelectionSet {
+  if (selectionSet == null || selectionSet.selections == null) {
+    return selectionSet;
+  }
+
+  selectionSet.selections.forEach((selection) => {
+    if (selection.directives) {
+      selection.directives = selection.directives.filter((directive) => {
+        // Return true if this directive does not appear in the list we want to remove
+        return APOLLO_CLIENT_DIRECTIVES.indexOf(directive.name.value) === -1;
+      });
+    }
+
+    if ((selection as InlineFragment | Field).selectionSet) {
+      stripApolloDirectivesFromSelectionSet((selection as InlineFragment | Field).selectionSet);
+    }
+  });
+
+  return selectionSet;
+}
+
 // Apply a QueryTranformer to an OperationDefinition (extracted from a query
 // or a mutation.)
 // Returns a new query tree.
-export function applyTransformerToOperation(queryDef: OperationDefinition,
-  queryTransformer: QueryTransformer): OperationDefinition {
+export function applyTransformerToOperation(
+  queryDef: OperationDefinition,
+  queryTransformer: QueryTransformer
+): OperationDefinition {
     const queryClone = cloneDeep(queryDef);
     queryTransformer(queryClone.selectionSet);
     return queryClone;
