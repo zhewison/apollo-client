@@ -19,8 +19,7 @@
     "lint": "grunt tslint",
     "coverage": "istanbul cover ./node_modules/mocha/bin/_mocha -- --reporter dot --full-trace lib/test/tests.js",
     "postcoverage": "remap-istanbul --input coverage/coverage.json --type lcovonly --output coverage/lcov.info",
-    "testonly": "mocha --reporter spec --full-trace lib/test/tests.js",
-    "docs": "typedoc -out docs src/index.ts"
+    "testonly": "mocha --reporter spec --full-trace lib/test/tests.js"
   },
   "repository": {
     "type": "git",
