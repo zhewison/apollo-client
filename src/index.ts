@@ -146,6 +146,10 @@ export default class ApolloClient {
   public dataId: IdGetter;
   public fieldWithArgs: (fieldName: string, args?: Object) => string;
 
+  /**
+   *
+   * @param networkInterface network interface thingy
+  */
   constructor({
     networkInterface,
     reduxRootKey,
@@ -187,6 +191,10 @@ export default class ApolloClient {
     };
   }
 
+  /**
+   *
+   * @param options - options for watching query
+  */
   public watchQuery = (options: WatchQueryOptions): ObservableQuery => {
     this.initStore();
 
