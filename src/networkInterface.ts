@@ -260,6 +260,14 @@ export interface NetworkInterfaceOptions {
 // where the latter is preferred over the former.
 //
 // XXX remove this backward compatibility feature by 1.0
+
+/**
+ *
+ * Create a new HTTP network interface that points to a GraphQL server at a specific URI.
+ *
+ * @param interfaceOpts Options for the network interface, or the URL of the remote server
+ * @param backOpts Options for the fetch API
+ */
 export function createNetworkInterface(
   interfaceOpts: (NetworkInterfaceOptions | string),
   backOpts: RequestInit = {}
