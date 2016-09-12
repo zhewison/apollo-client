@@ -25,6 +25,7 @@ describe('ObservableQuery', () => {
     }
   `;
   const variables = { id: 1 };
+  const differentVariables = { id: 2 };
   const dataOne = {
     people_one: {
       name: 'Luke Skywalker',
@@ -35,6 +36,64 @@ describe('ObservableQuery', () => {
       name: 'Leia Skywalker',
     },
   };
+
+  describe('setVariables', () => {
+    it('reruns query if the variables change', (done) => {
+      const observable: ObservableQuery = mockWatchQuery({
+        request: { query, variables },
+        result: { data: dataOne },
+      }, {
+        request: { query, variables: differentVariables },
+        result: { data: dataTwo },
+      });
+
+      let handleCount = 0;
+      observable.subscribe({
+        next: wrap(done, result => {
+          handleCount++;
+
+          if (handleCount === 1) {
+            assert.deepEqual(result.data, dataOne);
+            observable.setVariables(differentVariables);
+          } else if (handleCount === 2) {
+            assert.deepEqual(result.data, dataTwo);
+            done();
+          }
+        }),
+      });
+    });
+
+
+    it('does not rerun query if variables do not change', (done) => {
+      const observable: ObservableQuery = mockWatchQuery({
+        request: { query, variables },
+        result: { data: dataOne },
+      }, {
+        request: { query, variables },
+        result: { data: dataTwo },
+      });
+
+      let handleCount = 0;
+      let errored = false;
+      observable.subscribe({
+        next: wrap(done, result => {
+          handleCount++;
+
+          if (handleCount === 1) {
+            assert.deepEqual(result.data, dataOne);
+            observable.setVariables(variables);
+
+            // Nothing should happen, so we'll wait a moment to check that
+            setTimeout(() => !errored && done(), 10);
+          } else if (handleCount === 2) {
+            errored = true;
+            throw new Error('Observable callback should not fire twice');
+          }
+        }),
+      });
+    });
+  });
+
   describe('currentResult', () => {
     it('returns the current query status immediately', (done) => {
       const observable: ObservableQuery = mockWatchQuery({
