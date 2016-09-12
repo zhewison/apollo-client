@@ -640,8 +640,18 @@ describe('QueryManager', () => {
       },
     };
 
-    const variables = {
+    const data4 = {
+      people_one: {
+        name: 'Luke Skywalker has a whole new bag',
+      },
+    };
+
+    const variables1 = {
       test: 'I am your father',
+    };
+
+    const variables2 = {
+      test: "No. No! That's not true! That's impossible!",
     };
 
     const queryManager = mockQueryManager(
@@ -654,8 +664,12 @@ describe('QueryManager', () => {
         result: { data: data2 },
       },
       {
-        request: { query: query, variables },
+        request: { query: query, variables: variables1 },
         result: { data: data3 },
+      },
+      {
+        request: { query: query, variables: variables2 },
+        result: { data: data4 },
       }
     );
     let handleCount = 0;
@@ -670,9 +684,12 @@ describe('QueryManager', () => {
           handle.refetch();
         } else if (handleCount === 2) {
           assert.deepEqual(result.data, data2);
-          handle.refetch(variables);
+          handle.refetch(variables1);
         } else if (handleCount === 3) {
           assert.deepEqual(result.data, data3);
+          handle.refetch(variables2);
+        } else if (handleCount === 4) {
+          assert.deepEqual(result.data, data4);
           done();
         }
       },
