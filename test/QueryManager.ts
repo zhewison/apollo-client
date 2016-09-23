@@ -3144,6 +3144,9 @@ describe('QueryManager', () => {
     });
   });
 
+  describe('network status', () => {
+  });
+
   describe('refetchQueries', () => {
     it('should refetch the right query when a result is successfully returned', (done) => {
       const mutation = gql`
