@@ -134,6 +134,7 @@ export class QueryManager {
   private queryTransformer: QueryTransformer;
   private resultTransformer: ResultTransformer;
   private resultComparator: ResultComparator;
+  private returnErrorsWithResults: Boolean;
   private queryListeners: { [queryId: string]: QueryListener[] };
 
   private idCounter = 0;
@@ -171,6 +172,7 @@ export class QueryManager {
     resultTransformer,
     resultComparator,
     shouldBatch = false,
+    returnErrorsWithResults = false,
     batchInterval = 10,
   }: {
     networkInterface: NetworkInterface,
@@ -180,6 +182,7 @@ export class QueryManager {
     resultTransformer?: ResultTransformer,
     resultComparator?: ResultComparator,
     shouldBatch?: Boolean,
+    returnErrorsWithResults?: Boolean,
     batchInterval?: number,
   }) {
     // XXX this might be the place to do introspection for inserting the `id` into the query? or
@@ -190,6 +193,7 @@ export class QueryManager {
     this.queryTransformer = queryTransformer;
     this.resultTransformer = resultTransformer;
     this.resultComparator = resultComparator;
+    this.returnErrorsWithResults = returnErrorsWithResults;
     this.pollingTimers = {};
     this.batchInterval = batchInterval;
     this.queryListeners = {};
@@ -348,40 +352,51 @@ export class QueryManager {
 
         // If we have either a GraphQL error or a network error, we create
         // an error and tell the observer about it.
+
+        // If `returnErrorsWithResults` is true, merge any errors with partial
+        // query response.
+        let apolloError: any;
         if (queryStoreValue.graphQLErrors || queryStoreValue.networkError) {
-          const apolloError = new ApolloError({
+          // Set the ApolloError for use in a complete error response
+          // Or to be merged in with a partial query response
+          apolloError = new ApolloError({
             graphQLErrors: queryStoreValue.graphQLErrors,
             networkError: queryStoreValue.networkError,
           });
-          if (observer.error) {
-            observer.error(apolloError);
-          } else {
-            console.error('Unhandled error', apolloError, apolloError.stack);
-          }
-        } else {
-          try {
-            const resultFromStore = {
-              data: readSelectionSetFromStore({
-                store: this.getDataWithOptimisticResults(),
-                rootId: queryStoreValue.query.id,
-                selectionSet: queryStoreValue.query.selectionSet,
-                variables: queryStoreValue.previousVariables || queryStoreValue.variables,
-                returnPartialData: options.returnPartialData || options.noFetch,
-                fragmentMap: queryStoreValue.fragmentMap,
-              }),
-              loading: queryStoreValue.loading,
-            };
 
-            if (observer.next) {
-              if (this.isDifferentResult(lastResult, resultFromStore)) {
-                lastResult = resultFromStore;
-                observer.next(this.transformResult(resultFromStore));
-              }
-            }
-          } catch (error) {
+          // Only return errors when 'returnErrorsWithResults' is false
+          if (! this.returnErrorsWithResults) {
             if (observer.error) {
-              observer.error(error);
+              return observer.error(apolloError);
+            } else {
+              return console.error('Unhandled error', apolloError, apolloError.stack);
             }
+          }
+        }
+
+        try {
+          let resultFromStore = {
+            data: readSelectionSetFromStore({
+              store: this.getDataWithOptimisticResults(),
+              rootId: queryStoreValue.query.id,
+              selectionSet: queryStoreValue.query.selectionSet,
+              variables: queryStoreValue.previousVariables || queryStoreValue.variables,
+              returnPartialData: options.returnPartialData || options.noFetch,
+              fragmentMap: queryStoreValue.fragmentMap,
+            }),
+            error: apolloError || undefined, // Returns errors with partial query results if `returnErrorsWithResults` set
+            loading: queryStoreValue.loading,
+          };
+
+          if (observer.next) {
+            if (this.isDifferentResult(lastResult, resultFromStore)) {
+              lastResult = resultFromStore;
+              observer.next(this.transformResult(resultFromStore));
+            }
+          }
+        } catch (error) {
+          if (observer.error) {
+            observer.error(error);
           }
         }
       }

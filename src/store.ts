@@ -137,6 +137,7 @@ export function createApolloStore({
 export interface ApolloReducerConfig {
   dataIdFromObject?: IdGetter;
   mutationBehaviorReducers?: MutationBehaviorReducerMap;
+  returnErrorsWithResults?: Boolean;
 }
 
 export function getDataWithOptimisticResults(store: Store): NormalizedCache {

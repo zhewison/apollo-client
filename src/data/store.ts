@@ -96,7 +96,7 @@ export function data(
     }
 
     // XXX handle partial result due to errors
-    if (! graphQLResultHasError(action.result)) {
+    if (! graphQLResultHasError(action.result) || config.returnErrorsWithResults) {
       const queryStoreValue = queries[action.queryId];
 
       // XXX use immutablejs instead of cloning

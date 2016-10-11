@@ -339,6 +339,7 @@ describe('ObservableQuery', () => {
         .then((result: any) => {
           assert.deepEqual(result, {
             data: dataOne,
+            error: undefined,
             loading: false,
           });
 
@@ -371,6 +372,7 @@ describe('ObservableQuery', () => {
           });
           assert.deepEqual(observable.currentResult(), {
             data: dataOne,
+            error: undefined,
             loading: true,
           });
 
@@ -381,11 +383,13 @@ describe('ObservableQuery', () => {
             if (handleCount === 1) {
               assert.deepEqual(subResult, {
                 data: dataOne,
+                error: undefined,
                 loading: true,
               });
             } else if (handleCount === 2) {
               assert.deepEqual(subResult, {
                 data: superDataOne,
+                error: undefined,
                 loading: false,
               });
               done();
@@ -412,6 +416,7 @@ describe('ObservableQuery', () => {
           });
           assert.deepEqual(observable.currentResult(), {
             data: dataOne,
+            error: undefined,
             loading: true,
           });
 

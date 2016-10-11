@@ -119,10 +119,13 @@ export {
 
 export type ApolloQueryResult = {
   data: any;
+  error?: any;
   loading: boolean;
 
   // This type is different from the GraphQLResult type because it doesn't include errors.
   // Those are thrown via the standard promise/observer catch mechanism.
+
+  // Error is an optional field used when you need to return errors with a result set.
 }
 
 /**
@@ -215,6 +218,7 @@ export default class ApolloClient {
   public resultTransformer: ResultTransformer;
   public resultComparator: ResultComparator;
   public shouldBatch: boolean;
+  public returnErrorsWithResults: boolean;
   public shouldForceFetch: boolean;
   public dataId: IdGetter;
   public fieldWithArgs: (fieldName: string, args?: Object) => string;
@@ -257,6 +261,9 @@ export default class ApolloClient {
    * This happens transparently: each query will still receive exactly the result it asked for,
    * regardless of whether or not it is batched.
    *
+   * @param returnErrorsWithResults Determines whether errors should be merged with a partially
+   * completed GraphQL query.
+   *
    * @param ssrMode Determines whether this is being run in Server Side Rendering (SSR) mode.
    *
    * @param ssrForceFetchDelay Determines the time interval before we force fetch queries for a
@@ -274,6 +281,7 @@ export default class ApolloClient {
     resultTransformer,
     resultComparator,
     shouldBatch = false,
+    returnErrorsWithResults = false,
     ssrMode = false,
     ssrForceFetchDelay = 0,
     mutationBehaviorReducers = {} as MutationBehaviorReducerMap,
@@ -288,6 +296,7 @@ export default class ApolloClient {
     resultTransformer?: ResultTransformer,
     resultComparator?: ResultComparator,
     shouldBatch?: boolean,
+    returnErrorsWithResults?: boolean,
     ssrMode?: boolean,
     ssrForceFetchDelay?: number
     mutationBehaviorReducers?: MutationBehaviorReducerMap,
@@ -325,6 +334,7 @@ export default class ApolloClient {
     this.resultTransformer = resultTransformer;
     this.resultComparator = resultComparator;
     this.shouldBatch = shouldBatch;
+    this.returnErrorsWithResults = returnErrorsWithResults;
     this.shouldForceFetch = !(ssrMode || ssrForceFetchDelay > 0);
     this.dataId = dataIdFromObject;
     this.fieldWithArgs = storeKeyNameFromFieldNameAndArgs;
@@ -337,6 +347,7 @@ export default class ApolloClient {
     this.reducerConfig = {
       dataIdFromObject,
       mutationBehaviorReducers,
+      returnErrorsWithResults,
     };
 
     this.watchQuery = this.watchQuery.bind(this);
@@ -535,6 +546,7 @@ export default class ApolloClient {
       resultTransformer: this.resultTransformer,
       resultComparator: this.resultComparator,
       shouldBatch: this.shouldBatch,
+      returnErrorsWithResults: this.returnErrorsWithResults,
       batchInterval: this.batchInterval,
     });
   };
